@@ -22,10 +22,13 @@ interface Todo {
 export const App = () => {
   // Enrich initial todos with user data
   const [todos, setTodos] = useState<Todo[]>(
-    todosFromServer.map(todo => ({
-      ...todo,
-      user: usersFromServer.find(user => user.id === todo.userId)!,
-    })),
+    todosFromServer
+      .map(todo => {
+        const user = usersFromServer.find(auser => auser.id === todo.userId);
+
+        return user ? { ...todo, user } : null;
+      })
+      .filter((todo): todo is Todo => todo !== null),
   );
 
   const [title, setTitle] = useState('');
@@ -50,12 +53,20 @@ export const App = () => {
       return;
     }
 
+    const user = usersFromServer.find(auser => auser.id === selectedUserId);
+
+    if (!user) {
+      setError(prev => ({ ...prev, user: true }));
+
+      return;
+    }
+
     const newTodo: Todo = {
       id: Math.max(0, ...todos.map(todo => todo.id)) + 1,
       title: title.trim(),
       completed: false,
       userId: selectedUserId,
-      user: usersFromServer.find(user => user.id === selectedUserId)!,
+      user,
     };
 
     setTodos([...todos, newTodo]);
